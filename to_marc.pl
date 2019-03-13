@@ -6,6 +6,9 @@ use warnings;
 # The contents of the Excel file have been copy + pasted
 # into a TSV file for easier processing. 
 
+# ARGS:
+#	0 => input file path
+
 use MARC;
 use Hzn::Util::Date;
 
@@ -34,7 +37,7 @@ while (<$fh>) {
 		
 		my $article = $1 if $title_en =~ /^(A|An|The)/;
 		if ($article) {
-			$f->ind2(length $article);
+			$f->ind2(length($article) + 1);
 		}
 		
 		$r->add_field($f)
