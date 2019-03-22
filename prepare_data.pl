@@ -4,8 +4,8 @@ use warnings;
 
 binmode STDOUT, 'utf8';
 
-# $ARGV[0] => "master" CSV
-# $ARGV[1] => undl existing CSV with symbols in third column
+# $ARGV[0] => "master" TSV
+# $ARGV[1] => undl existing TSV with symbols in third column
 # **@ARGV => CSVs with indclude symmols in the first line
 
 # output: CSV to run as input to "to_marc.pl"
@@ -56,6 +56,8 @@ while (<$master>) {
 	}
 	
 	say {$out} join "\t", @row[0..5];
+	
+	$existing->{$sym} = 1;
 	
 	$c++;
 }
