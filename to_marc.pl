@@ -33,8 +33,17 @@ use constant ISO_TO_STR => {
 	FR => 'Français',
 	RU => 'Русский',
 	ES => 'Español',
-	#DE => 'Deutsch',
 	DE => 'Other',
+};
+
+use constant ISO_TO_UNBIS => {
+	AR => 'ara',
+	ZH => 'chi',
+	EN => 'eng',
+	FR => 'fre',
+	RU => 'rus',
+	ES => 'spa',
+	DE => 'ger'
 };
 
 my $db = MongoDB->connect($ARGV[2])->get_database('undlFiles')->get_collection('escwa_temp');
@@ -71,11 +80,16 @@ while (<$fh>) {
 	}
 	
 	_091: {
-		# $r->add_field(MARC::Field->new(tag => '091')->set_sub('a','GEN'));
+		$r->add_field(MARC::Field->new(tag => '091')->set_sub('a','GEN'));
 	}
 	
 	_191: {
-		$r->add_field(MARC::Field->new(tag => '191')->set_sub('a',$sym));
+		$r->add_field (
+			MARC::Field->new(tag => '191')
+				->set_sub('a',$sym)
+				->set_sub('b','E/ESCWA')
+				->set_sub('0','402444')
+		);
 	}
 	
 	_245: {
@@ -103,7 +117,21 @@ while (<$fh>) {
 		$date = join '-', @parts[2,0,1];
 		$r->add_field(MARC::Field->new(tag => '269')->set_sub('a',$date));
 		$date = Hzn::Util::Date::_269_260($date);
-		$r->add_field(MARC::Field->new(tag => '260')->set_sub('a',$date));
+		$r->add_field (
+			MARC::Field->new(tag => '260')
+				->set_sub('a','Beirut :')
+				->set_sub('b','ESCWA,')
+				->set_sub('c',$date)
+		);
+	}
+	
+	_541: {
+		$r->add_field (
+			MARC::Field->new(tag => '541')
+				->set_sub('a','ESCWA')
+				->set_sub('c','import')
+				->set_sub('d','2019-01-01')
+		);
 	}
 	
 	_650_651: {
@@ -131,11 +159,13 @@ while (<$fh>) {
 		$r->add_field(MARC::Field->new(tag => '989')->set_sub('a','Documents and Publications'));
 	}
 	
-	_FFT: {
+	_FFT_041: {
 		#next;
 		my $cur = $db->find({symbol => $sym});
+		my @langs;
 		while (my $doc = $cur->next) {
 			my ($lang,$uri) = @{$doc}{qw<language uri>};
+			push @langs, $lang;
 			{
 				# clean the urls
 				$uri =~ s|aws/Drop/|aws.com/Drop/temp/|;
@@ -153,6 +183,9 @@ while (<$fh>) {
 			$f->set_sub('d',ISO_TO_STR->{$lang});
 			$r->add_field($f);
 		}
+		
+		my $langstr = join '', map {ISO_TO_UNBIS->{$_}} @langs;
+		$r->add_field(MARC::Field->new(tag => '041')->set_sub('a',$langstr));
 	}
 	
 	_003: {
@@ -179,8 +212,8 @@ while (<$fh>) {
 		$r->descriptive_cataloging_form('a');
 	}
 	
-	print $r->to_xml;
-	#print $r->to_mrk;
+	#print $r->to_xml;
+	print $r->to_mrk;
 }
 
 say '</collection>';
